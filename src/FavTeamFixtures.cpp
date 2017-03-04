@@ -1,11 +1,10 @@
 #include "FavTeamFixtures.h"
 #include <rapidjson/document.h>
+#include "utility.h"
 #include  <iostream>
 using namespace rapidjson;
 
-FavTeamFixtures::FavTeamFixtures(const  char* name):teamName(name),
-                                                    curl(NULL),
-                                                    list(NULL)
+FavTeamFixtures::FavTeamFixtures():curl(NULL),list(NULL)
 {
     supportedTeams.insert({"liverpool","64"});
     supportedTeams.insert({"arsenal","57"});
@@ -26,8 +25,7 @@ size_t FavTeamFixtures::receivedData(void *data, size_t size, size_t nmemb, std:
         return size * nmemb;
 }
 
-
-std::string FavTeamFixtures::processRequest()
+void FavTeamFixtures::processRequest(const char* teamName)
 {
     //check if the team supported
     auto search = supportedTeams.find(teamName);
@@ -52,13 +50,19 @@ std::string FavTeamFixtures::processRequest()
                 if(!serverReply.empty()){
                     parseData(serverReply);
                 }
-
             }
         }
-        return serverReply;
     }
+}
 
-    return "";
+std::string FavTeamFixtures::getResultString()
+{
+    return resultString;
+}
+
+Map FavTeamFixtures::getResultMap()
+{
+    return resultMap;
 }
 
 void FavTeamFixtures::parseData(std::string& serverReply)
@@ -66,59 +70,27 @@ void FavTeamFixtures::parseData(std::string& serverReply)
     const char* jsonData = serverReply.c_str();
     Document document;
     document.Parse(jsonData);
-    const char* date = "";
-    const char* homeTeam = "";
-    const char* awayTeam = "";
-    serverReply  = "";
-    for (auto  itr = document.MemberBegin(); itr != document.MemberEnd(); ++itr)
-    {
-        if(strcmp(itr->name.GetString(),"fixtures") == 0)
-        {
-             for(auto itr2 =  itr->value.Begin(); itr2 != itr->value.End(); itr2++)
-             {
-                 for (auto itr3 = itr2->MemberBegin(); itr3 != itr2->MemberEnd(); itr3++)
-                 {
-                     if(strcmp(itr3->name.GetString(),"homeTeamName") == 0)
-                     {
-                         homeTeam = itr3->value.GetString();
-                     }
-                     if(strcmp(itr3->name.GetString(),"awayTeamName") == 0)
-                     {
-                        awayTeam = itr3->value.GetString();
-                     }
-                     if(strcmp(itr3->name.GetString(),"date") == 0)
-                     {
-                         date =  itr3->value.GetString();
-                     }
+    if(document["fixtures"].IsArray()) {
+        // fixtues is an array
+        const Value& fixtures = document["fixtures"];
+        for(auto it = fixtures.Begin(); it!= fixtures.End(); it++) {
+            if(it->IsObject()) {
 
-                 }
+                // store the result in string
+                resultString.append((*it)["homeTeamName"].GetString());
+                resultString.append(" Vs ");
+                resultString.append((*it)["awayTeamName"].GetString());
+                resultString.append("\n");
+                resultString.append(check_date((*it)["date"].GetString()));
+                resultString.append(" at ");
+                resultString.append(get_time((*it)["date"].GetString()));
 
-                 while(*homeTeam != NULL){
-                     serverReply.push_back(*homeTeam);
-                     homeTeam++;
-                 }
-                 serverReply.push_back(' ') ;
-                 serverReply.push_back('v') ;
-                 serverReply.push_back('s') ;
-                 serverReply.push_back(' ') ;
-                 while(*awayTeam != NULL){
-                     serverReply.push_back(*awayTeam);
-                     awayTeam++;
-                 }
-                 serverReply.push_back(' ');
-                 serverReply.push_back('o');
-                 serverReply.push_back('n');
-                 serverReply.push_back(' ');
-                 while(*date != NULL){
-                     serverReply.push_back(*date);
-                     date++;
-                 }
-                 serverReply.push_back('\n');
-
-             }
-
+                //store the result in the map
+                resultMap.insert({"home_team", (*it)["homeTeamName"].GetString()});
+                resultMap.insert({"away_team", (*it)["awayTeamName"].GetString()});
+                resultMap.insert({"date", get_date((*it)["date"].GetString())});
+                resultMap.insert({"time", get_time((*it)["date"].GetString())});
+            }
         }
-        // cout << itr->name.GetString() << " " << itr->value.GetType()<< endl;
     }
-
 }
