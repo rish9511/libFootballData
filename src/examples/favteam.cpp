@@ -29,10 +29,12 @@ int main(int argc, const char* argv[])
 
 	   // result in map foramt
        std::unordered_map<std::string, std::string> resultMap = favteam.getResultMap();
-       std::cout << resultMap["home_team"] << std::endl;
-	   std::cout << resultMap["away_team"] << std::endl;
-	   std::cout << resultMap["date"] << std::endl;
-	   std::cout << resultMap["time"] << std::endl;
+       if(!resultMap.empty()){
+				 std::cout << resultMap["home_team"] << std::endl;
+				 std::cout << resultMap["away_team"] << std::endl;
+				 std::cout << resultMap["date"] << std::endl;
+				 std::cout << resultMap["time"] << std::endl;
+			 }
        arguments++;
     }
 

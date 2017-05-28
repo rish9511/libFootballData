@@ -4,7 +4,7 @@
 #include  <iostream>
 using namespace rapidjson;
 
-FavTeamFixtures::FavTeamFixtures():curl(NULL),list(NULL)
+FavTeamFixtures::FavTeamFixtures():resultString("No matches scheduled for today"),curl(NULL),list(NULL)
 {
     supportedTeams.insert({"liverpool","64"});
     supportedTeams.insert({"arsenal","57"});
